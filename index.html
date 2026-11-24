@@ -17,7 +17,6 @@
   }
 
   *{ box-sizing:border-box; }
-
   html,body{ height:100%; }
 
   body{
@@ -39,7 +38,6 @@
     -webkit-backdrop-filter:blur(12px);
     border-bottom:1px solid var(--line);
   }
-
   .brand{
     font-size:17px; font-weight:700; letter-spacing:.5px;
     white-space:nowrap;
@@ -93,7 +91,6 @@
     justify-content:space-between;
     padding:18px 24px 0;
   }
-
   .filters{ display:flex; flex-wrap:wrap; gap:6px; }
 
   .chip{
@@ -141,7 +138,7 @@
     gap:20px 16px;
   }
 
-  .card{ cursor:pointer; }
+  .card{ cursor:pointer; transition:transform .18s ease; }
 
   .cover{
     position:relative;
@@ -158,7 +155,6 @@
     box-shadow:0 8px 22px rgba(20,22,26,.16);
   }
   .card:hover{ transform:translateY(-2px); }
-  .card{ transition:transform .18s ease; }
 
   .cover img{
     position:absolute; inset:0;
@@ -180,6 +176,7 @@
     width:9px; height:9px;
     border-radius:50%;
     box-shadow:0 0 0 2px rgba(255,255,255,.9);
+    z-index:2;
   }
 
   .card-body{ padding:8px 2px 0; }
@@ -245,6 +242,7 @@
     border-radius:14px;
     padding:26px;
     box-shadow:0 24px 70px rgba(0,0,0,.22);
+    -webkit-overflow-scrolling:touch;
   }
 
   .modal h2{
@@ -281,6 +279,40 @@
   }
 
   .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  /* ---------- 封面上传 ---------- */
+  .cover-row{ display:flex; gap:8px; }
+  .cover-row input{ flex:1; min-width:0; }
+  .cover-row .btn{ padding:9px 14px; flex-shrink:0; }
+
+  .cover-preview{
+    display:none;
+    position:relative;
+    margin-top:8px;
+    width:88px;
+    aspect-ratio:2/3;
+    border-radius:8px;
+    overflow:hidden;
+    border:1px solid var(--line);
+    background:#f0f2f5;
+  }
+  .cover-preview img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .cover-preview button{
+    position:absolute;
+    top:4px; right:4px;
+    padding:2px 7px;
+    font-size:11px;
+    font-family:inherit;
+    border:none;
+    border-radius:6px;
+    background:rgba(20,22,26,.6);
+    color:#fff;
+    cursor:pointer;
+  }
 
   .rating-input{ display:flex; gap:4px; flex-wrap:wrap; }
 
@@ -396,8 +428,16 @@
         <input name="tags" maxlength="100" placeholder="科幻, 治愈, 神作">
       </label>
 
-      <label>封面图片链接
-        <input name="cover" placeholder="https://…">
+      <label>封面图片
+        <div class="cover-row">
+          <input name="cover" placeholder="粘贴图片链接，或点右侧上传">
+          <button type="button" class="btn" id="pickCoverBtn">上传</button>
+        </div>
+        <div class="cover-preview" id="coverPreview">
+          <img id="coverPreviewImg" alt="封面预览">
+          <button type="button" id="clearCoverBtn">移除</button>
+        </div>
+        <input type="file" id="coverFile" accept="image/*" hidden>
       </label>
 
       <label>简介
@@ -426,6 +466,11 @@
     '搁置':'#e0a04a', '抛弃':'#d16a6a'
   };
 
+  /* 封面压缩参数：网格里显示宽度约 124px，400 宽足够 2 倍屏 */
+  const COVER_MAX_W = 400;
+  const COVER_MAX_H = 600;
+  const COVER_QUALITY = 0.75;
+
   /* ========== 状态 ========== */
   let items = [];
   try {
@@ -435,24 +480,28 @@
 
   let editingId = null;
   let currentRating = 0;
+  let coverData = '';          // 上传的封面 dataURL
   let filterType = '全部';
   let filterStatus = '全部';
   let keyword = '';
   let sortBy = 'added';
 
   /* ========== DOM ========== */
-  const grid        = document.getElementById('grid');
-  const empty       = document.getElementById('empty');
-  const stats       = document.getElementById('stats');
-  const overlay     = document.getElementById('overlay');
-  const form        = document.getElementById('form');
-  const formTitle   = document.getElementById('formTitle');
-  const ratingInput = document.getElementById('ratingInput');
-  const delBtn      = document.getElementById('delBtn');
-  const typeFilter  = document.getElementById('typeFilter');
-  const statusFilter= document.getElementById('statusFilter');
-  const searchInput = document.getElementById('search');
-  const sortSel     = document.getElementById('sortSel');
+  const grid         = document.getElementById('grid');
+  const empty        = document.getElementById('empty');
+  const stats        = document.getElementById('stats');
+  const overlay      = document.getElementById('overlay');
+  const form         = document.getElementById('form');
+  const formTitle    = document.getElementById('formTitle');
+  const ratingInput  = document.getElementById('ratingInput');
+  const delBtn       = document.getElementById('delBtn');
+  const typeFilter   = document.getElementById('typeFilter');
+  const statusFilter = document.getElementById('statusFilter');
+  const searchInput  = document.getElementById('search');
+  const sortSel      = document.getElementById('sortSel');
+  const coverFile    = document.getElementById('coverFile');
+  const coverPreview = document.getElementById('coverPreview');
+  const coverImg     = document.getElementById('coverPreviewImg');
 
   /* ========== 工具 ========== */
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => (
@@ -473,11 +522,76 @@
     try {
       localStorage.setItem(KEY, JSON.stringify(items));
     } catch(e){
-      alert('保存失败：浏览器存储空间可能已满。');
+      alert('保存失败：浏览器存储空间可能已满。\n建议删除部分条目，或改用图片链接代替上传。');
     }
   }
 
   const field = n => form.querySelector('[name="' + n + '"]');
+
+  /* ========== 封面处理 ========== */
+  function updateCoverPreview(){
+    const src = coverData || field('cover').value.trim();
+    if (src){
+      coverImg.src = src;
+      coverPreview.style.display = 'block';
+    } else {
+      coverImg.removeAttribute('src');
+      coverPreview.style.display = 'none';
+    }
+  }
+
+  function processCoverFile(file){
+    if (!file) return;
+
+    if (!file.type || !file.type.startsWith('image/')){
+      alert('请选择图片文件。');
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = e => {
+      const img = new Image();
+
+      img.onload = () => {
+        // 按比例缩放到限制尺寸内，不裁剪
+        let w = img.naturalWidth || img.width;
+        let h = img.naturalHeight || img.height;
+        if (!w || !h){ alert('图片读取失败。'); return; }
+
+        const scale = Math.min(1, COVER_MAX_W / w, COVER_MAX_H / h);
+        w = Math.max(1, Math.round(w * scale));
+        h = Math.max(1, Math.round(h * scale));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+
+        const ctx = canvas.getContext('2d');
+        // 先铺白底，避免透明 PNG 转 JPEG 后变黑
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+
+        try {
+          coverData = canvas.toDataURL('image/jpeg', COVER_QUALITY);
+        } catch(err){
+          alert('图片处理失败，请换一张试试。');
+          return;
+        }
+
+        // 上传的图片优先于链接，清空链接框避免混淆
+        field('cover').value = '';
+        updateCoverPreview();
+      };
+
+      img.onerror = () => alert('图片格式无法识别，请换一张试试。');
+      img.src = e.target.result;
+    };
+
+    reader.onerror = () => alert('文件读取失败，请重试。');
+    reader.readAsDataURL(file);
+  }
 
   /* ========== 初始化 ========== */
   function init(){
@@ -614,8 +728,20 @@
     field('progress').value = item && item.progress ? item.progress : '';
     field('total').value    = item && item.total    ? item.total    : '';
     field('tags').value     = item ? item.tags     || '' : '';
-    field('cover').value    = item ? item.cover    || '' : '';
     field('summary').value  = item ? item.summary  || '' : '';
+
+    // 封面：区分「上传的图片」和「外部链接」
+    coverData = '';
+    field('cover').value = '';
+    if (item && item.cover){
+      if (item.cover.indexOf('data:') === 0){
+        coverData = item.cover;
+      } else {
+        field('cover').value = item.cover;
+      }
+    }
+    coverFile.value = '';
+    updateCoverPreview();
 
     currentRating = item ? item.rating || 0 : 0;
     paintRating();
@@ -631,6 +757,7 @@
     overlay.classList.remove('open');
     document.body.style.overflow = '';
     editingId = null;
+    coverData = '';
   }
 
   /* ========== 事件 ========== */
@@ -646,6 +773,32 @@
       if (e.key === 'Escape' && overlay.classList.contains('open')) closeForm();
     });
 
+    /* ---- 封面上传 ---- */
+    document.getElementById('pickCoverBtn').addEventListener('click', () => {
+      coverFile.click();
+    });
+
+    coverFile.addEventListener('change', e => {
+      const file = e.target.files && e.target.files[0];
+      processCoverFile(file);
+      // 重置，保证同一张图可以再次选择
+      e.target.value = '';
+    });
+
+    document.getElementById('clearCoverBtn').addEventListener('click', () => {
+      coverData = '';
+      field('cover').value = '';
+      coverFile.value = '';
+      updateCoverPreview();
+    });
+
+    // 手动输入/粘贴链接时同步预览
+    field('cover').addEventListener('input', () => {
+      if (field('cover').value.trim()) coverData = '';
+      updateCoverPreview();
+    });
+
+    /* ---- 评分 ---- */
     ratingInput.addEventListener('click', e => {
       const btn = e.target.closest('.rbtn');
       if (!btn) return;
@@ -654,6 +807,7 @@
       paintRating();
     });
 
+    /* ---- 提交 ---- */
     form.addEventListener('submit', e => {
       e.preventDefault();
 
@@ -669,7 +823,7 @@
         progress: Number(field('progress').value) || 0,
         total:    Number(field('total').value) || 0,
         tags:     field('tags').value.trim(),
-        cover:    field('cover').value.trim(),
+        cover:    coverData || field('cover').value.trim(),
         summary:  field('summary').value.trim()
       };
 
@@ -685,6 +839,7 @@
       render();
     });
 
+    /* ---- 删除 ---- */
     delBtn.addEventListener('click', () => {
       if (!editingId) return;
       const item = items.find(x => x.id === editingId);
@@ -697,6 +852,7 @@
       }
     });
 
+    /* ---- 筛选 / 搜索 / 排序 ---- */
     typeFilter.addEventListener('click', e => {
       const c = e.target.closest('.chip');
       if (!c) return;
