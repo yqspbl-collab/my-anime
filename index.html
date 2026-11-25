@@ -2,892 +2,561 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>我的收藏</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>初音绿 · 番剧管理</title>
 <style>
-  :root{
-    --bg:#f7f8fa;
-    --panel:#ffffff;
-    --text:#1f2328;
-    --muted:#8a919c;
-    --line:#e8eaee;
-    --accent:#ec6a80;
-    --accent-soft:#fdeef1;
-    --radius:10px;
+  :root {
+    --miku: #39C5BB;
+    --miku-dark: #2aa89f;
+    --miku-soft: rgba(57, 197, 187, 0.12);
+    --bg: #f5fbfa;
+    --card: #ffffff;
+    --text: #1e2a28;
+    --muted: #6b7c78;
+    --border: #d9ece9;
+    --danger: #e05c6e;
+    --radius: 12px;
   }
 
-  *{ box-sizing:border-box; }
-  html,body{ height:100%; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body{
-    margin:0;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    font-size:14px;
-    -webkit-font-smoothing:antialiased;
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
   }
 
-  /* ---------- 顶栏 ---------- */
-  .topbar{
-    position:sticky; top:0; z-index:20;
-    display:flex; align-items:center; gap:16px;
-    padding:14px 24px;
-    background:rgba(255,255,255,.86);
-    backdrop-filter:blur(12px);
-    -webkit-backdrop-filter:blur(12px);
-    border-bottom:1px solid var(--line);
-  }
-  .brand{
-    font-size:17px; font-weight:700; letter-spacing:.5px;
-    white-space:nowrap;
-  }
-  .brand .mark{ color:var(--accent); }
-
-  .search{ flex:1; max-width:380px; }
-  .search input{
-    width:100%;
-    padding:9px 14px;
-    border:1px solid var(--line);
-    border-radius:999px;
-    font-size:13.5px;
-    font-family:inherit;
-    background:#fff;
-    outline:none;
-    transition:border-color .15s, box-shadow .15s;
-  }
-  .search input:focus{
-    border-color:var(--accent);
-    box-shadow:0 0 0 3px var(--accent-soft);
+  header {
+    background: var(--miku);
+    color: #fff;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
   }
 
-  .btn{
-    border:1px solid var(--line);
-    background:#fff;
-    color:var(--text);
-    padding:9px 16px;
-    border-radius:8px;
-    font-size:13.5px;
-    font-family:inherit;
-    cursor:pointer;
-    white-space:nowrap;
-    transition:all .15s;
-  }
-  .btn:hover{ border-color:#d3d7dd; }
-  .btn.primary{
-    background:var(--accent);
-    border-color:var(--accent);
-    color:#fff;
-    font-weight:600;
-  }
-  .btn.primary:hover{ filter:brightness(.95); }
-
-  /* ---------- 工具栏 ---------- */
-  .toolbar{
-    display:flex;
-    flex-wrap:wrap;
-    gap:12px;
-    align-items:center;
-    justify-content:space-between;
-    padding:18px 24px 0;
-  }
-  .filters{ display:flex; flex-wrap:wrap; gap:6px; }
-
-  .chip{
-    padding:6px 13px;
-    border-radius:999px;
-    border:1px solid var(--line);
-    background:#fff;
-    color:var(--muted);
-    font-size:12.5px;
-    font-family:inherit;
-    cursor:pointer;
-    transition:all .15s;
-  }
-  .chip:hover{ border-color:#d3d7dd; color:var(--text); }
-  .chip.active{
-    background:var(--accent-soft);
-    border-color:var(--accent);
-    color:var(--accent);
-    font-weight:600;
+  header h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
   }
 
-  .sort{
-    padding:7px 12px;
-    border:1px solid var(--line);
-    border-radius:8px;
-    background:#fff;
-    font-size:12.5px;
-    font-family:inherit;
-    color:var(--muted);
-    outline:none;
-    cursor:pointer;
-  }
-  .sort:focus{ border-color:var(--accent); }
-
-  /* ---------- 网格 ---------- */
-  main{
-    padding:20px 24px 40px;
-    max-width:1400px;
-    margin:0 auto;
+  header h1 span {
+    opacity: 0.85;
+    font-weight: 400;
+    font-size: 0.9rem;
+    margin-left: 8px;
   }
 
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(124px, 1fr));
-    gap:20px 16px;
+  .btn {
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
   }
 
-  .card{ cursor:pointer; transition:transform .18s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .cover{
-    position:relative;
-    aspect-ratio:2/3;
-    border-radius:var(--radius);
-    overflow:hidden;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#eef0f3;
-    transition:box-shadow .18s ease;
-  }
-  .card:hover .cover{
-    box-shadow:0 8px 22px rgba(20,22,26,.16);
-  }
-  .card:hover{ transform:translateY(-2px); }
+  .btn-primary { background: #fff; color: var(--miku-dark); }
+  .btn-primary:hover { opacity: 0.9; }
 
-  .cover img{
-    position:absolute; inset:0;
-    width:100%; height:100%;
-    object-fit:cover;
-    display:block;
+  .btn-ghost {
+    background: transparent;
+    color: var(--miku-dark);
+    border: 1.5px solid var(--miku);
   }
+  .btn-ghost:hover { background: var(--miku-soft); }
 
-  .cover .ph{
-    font-size:30px;
-    font-weight:600;
-    opacity:.75;
-    user-select:none;
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid #f0c0c6; }
+  .btn-danger:hover { background: #fdf0f1; }
+
+  .btn-sm { padding: 5px 12px; font-size: 0.82rem; }
+
+  main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
   }
 
-  .status-dot{
-    position:absolute;
-    top:8px; right:8px;
-    width:9px; height:9px;
-    border-radius:50%;
-    box-shadow:0 0 0 2px rgba(255,255,255,.9);
-    z-index:2;
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
   }
 
-  .card-body{ padding:8px 2px 0; }
-
-  .title{
-    font-size:13.5px;
-    font-weight:500;
-    line-height:1.4;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+  .toolbar input {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.92rem;
+    background: var(--card);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
   }
 
-  .sub{
-    display:flex;
-    align-items:center;
-    gap:6px;
-    margin-top:3px;
-    font-size:12px;
-    color:var(--muted);
-  }
-  .sub .rating{ color:var(--accent); font-weight:600; }
+  .toolbar input:focus { border-color: var(--miku); }
+  .toolbar input::placeholder { color: #a8bbb7; }
 
-  /* ---------- 空状态 ---------- */
-  .empty{
-    display:none;
-    text-align:center;
-    padding:90px 20px;
-    color:var(--muted);
-  }
-  .empty p{ margin:0 0 8px; }
-  .empty .dim{ font-size:13px; color:#b3b8c0; }
-
-  /* ---------- 统计 ---------- */
-  .stats{
-    max-width:1400px;
-    margin:0 auto;
-    padding:0 24px 40px;
-    font-size:12.5px;
-    color:var(--muted);
+  .count {
+    font-size: 0.85rem;
+    color: var(--muted);
+    white-space: nowrap;
   }
 
-  /* ---------- 弹窗 ---------- */
-  .overlay{
-    position:fixed; inset:0;
-    z-index:50;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-    background:rgba(20,22,26,.42);
-    backdrop-filter:blur(3px);
-    -webkit-backdrop-filter:blur(3px);
-  }
-  .overlay.open{ display:flex; }
-
-  .modal{
-    width:100%;
-    max-width:520px;
-    max-height:90vh;
-    overflow-y:auto;
-    background:var(--panel);
-    border-radius:14px;
-    padding:26px;
-    box-shadow:0 24px 70px rgba(0,0,0,.22);
-    -webkit-overflow-scrolling:touch;
+  /* 网格 */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
   }
 
-  .modal h2{
-    margin:0 0 18px;
-    font-size:16px;
-    font-weight:700;
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: box-shadow 0.18s, border-color 0.18s;
+    border-left: 4px solid var(--miku);
   }
 
-  form{ display:flex; flex-direction:column; gap:14px; }
-
-  label{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    font-size:12.5px;
-    color:var(--muted);
+  .card:hover {
+    box-shadow: 0 4px 18px rgba(57, 197, 187, 0.15);
+    border-color: var(--miku);
   }
 
-  label input, label select, label textarea{
-    padding:9px 11px;
-    border:1px solid var(--line);
-    border-radius:8px;
-    font-size:13.5px;
-    font-family:inherit;
-    color:var(--text);
-    background:#fff;
-    outline:none;
-    transition:border-color .15s, box-shadow .15s;
-    resize:vertical;
-  }
-  label input:focus, label select:focus, label textarea:focus{
-    border-color:var(--accent);
-    box-shadow:0 0 0 3px var(--accent-soft);
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
   }
 
-  .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-
-  /* ---------- 封面上传 ---------- */
-  .cover-row{ display:flex; gap:8px; }
-  .cover-row input{ flex:1; min-width:0; }
-  .cover-row .btn{ padding:9px 14px; flex-shrink:0; }
-
-  .cover-preview{
-    display:none;
-    position:relative;
-    margin-top:8px;
-    width:88px;
-    aspect-ratio:2/3;
-    border-radius:8px;
-    overflow:hidden;
-    border:1px solid var(--line);
-    background:#f0f2f5;
-  }
-  .cover-preview img{
-    width:100%; height:100%;
-    object-fit:cover;
-    display:block;
-  }
-  .cover-preview button{
-    position:absolute;
-    top:4px; right:4px;
-    padding:2px 7px;
-    font-size:11px;
-    font-family:inherit;
-    border:none;
-    border-radius:6px;
-    background:rgba(20,22,26,.6);
-    color:#fff;
-    cursor:pointer;
+  .card-title {
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.4;
+    word-break: break-word;
   }
 
-  .rating-input{ display:flex; gap:4px; flex-wrap:wrap; }
-
-  .rbtn{
-    width:31px; height:31px;
-    padding:0;
-    border:1px solid var(--line);
-    border-radius:7px;
-    background:#fff;
-    color:var(--muted);
-    font-size:12.5px;
-    font-family:inherit;
-    cursor:pointer;
-    transition:all .12s;
-  }
-  .rbtn:hover{ border-color:#d3d7dd; }
-  .rbtn.on{
-    background:var(--accent);
-    border-color:var(--accent);
-    color:#fff;
-    font-weight:600;
+  .card-title .year {
+    font-weight: 400;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-left: 6px;
   }
 
-  .actions{
-    display:flex;
-    gap:10px;
-    justify-content:flex-end;
-    margin-top:6px;
+  .status-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
-  .actions .del{
-    margin-right:auto;
-    color:#d16a6a;
-  }
-  .actions .del:hover{ border-color:#d16a6a; background:#fdf3f3; }
 
-  @media (max-width:640px){
-    .topbar{ flex-wrap:wrap; padding:12px 16px; gap:10px; }
-    .search{ order:3; flex:1 1 100%; max-width:none; }
-    .toolbar{ padding:14px 16px 0; }
-    main{ padding:16px 16px 30px; }
-    .stats{ padding:0 16px 30px; }
-    .grid{ grid-template-columns:repeat(auto-fill, minmax(104px, 1fr)); gap:16px 12px; }
-    .row{ grid-template-columns:1fr; }
-    .modal{ padding:20px; }
+  .status-在看 { background: var(--miku-soft); color: var(--miku-dark); }
+  .status-想看 { background: #f0f4f8; color: #5a6b80; }
+  .status-看过 { background: #eef6ee; color: #4a7c4a; }
+  .status-搁置 { background: #fdf6e8; color: #9a7b3c; }
+
+  .card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .card-meta span {
+    background: #f6faf9;
+    padding: 1px 8px;
+    border-radius: 5px;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 6px;
+  }
+
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+
+  .empty strong { color: var(--miku-dark); }
+
+  /* 模态框 */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 35, 32, 0.45);
+    backdrop-filter: blur(3px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    border-top: 5px solid var(--miku);
+  }
+
+  .modal h2 {
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+    color: var(--miku-dark);
+  }
+
+  .field { margin-bottom: 14px; }
+
+  .field label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--muted);
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: #fbfefd;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus { border-color: var(--miku); }
+
+  .field textarea { resize: vertical; min-height: 72px; }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 520px) {
+    header { padding: 16px; }
+    main { padding: 18px 14px 50px; }
+    .grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .card { padding: 14px; }
+    .card-title { font-size: 0.92rem; }
+    .card-actions { flex-direction: column; }
+    .field-row { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
-<header class="topbar">
-  <div class="brand"><span class="mark">◈</span> 我的收藏</div>
-  <div class="search">
-    <input id="search" type="search" placeholder="搜索标题、标签、简介…" autocomplete="off">
-  </div>
-  <button class="btn primary" id="addBtn">＋ 添加</button>
+<header>
+  <h1>🎵 番剧管理 <span>Miku Green Edition</span></h1>
+  <button class="btn btn-primary" id="addBtn">+ 添加番剧</button>
 </header>
 
-<div class="toolbar">
-  <div class="filters">
-    <div class="filters" id="typeFilter" style="gap:6px"></div>
-    <div style="width:1px;background:var(--line);margin:0 4px;"></div>
-    <div class="filters" id="statusFilter" style="gap:6px"></div>
-  </div>
-  <select class="sort" id="sortSel">
-    <option value="added">最近添加</option>
-    <option value="rating">评分最高</option>
-    <option value="title">标题排序</option>
-  </select>
-</div>
-
 <main>
+  <div class="toolbar">
+    <input type="search" id="searchInput" placeholder="搜索标题、标签或备注…">
+    <span class="count" id="countLabel"></span>
+  </div>
+
   <div class="grid" id="grid"></div>
-  <div class="empty" id="empty"></div>
 </main>
 
-<div class="stats" id="stats"></div>
-
-<div class="overlay" id="overlay">
+<!-- 编辑 / 添加 模态框 -->
+<div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <h2 id="formTitle">添加条目</h2>
-    <form id="form">
-      <label>标题
-        <input name="title" maxlength="80" required placeholder="例如：星际牛仔">
-      </label>
+    <h2 id="modalTitle">添加番剧</h2>
+    <form id="animeForm">
+      <input type="hidden" id="editId">
 
-      <label>原名 / 别名
-        <input name="original" maxlength="80" placeholder="可选">
-      </label>
-
-      <div class="row">
-        <label>类型
-          <select name="type"></select>
-        </label>
-        <label>状态
-          <select name="status"></select>
-        </label>
+      <div class="field">
+        <label for="title">标题 *</label>
+        <input type="text" id="title" required placeholder="例如：葬送的芙莉莲">
       </div>
 
-      <label>评分（点击数字，再点一次取消）
-        <div class="rating-input" id="ratingInput"></div>
-      </label>
-
-      <div class="row">
-        <label>当前进度
-          <input name="progress" type="number" min="0" placeholder="0">
-        </label>
-        <label>总进度
-          <input name="total" type="number" min="0" placeholder="—">
-        </label>
+      <div class="field-row">
+        <div class="field">
+          <label for="year">年份</label>
+          <input type="number" id="year" placeholder="2024" min="1950" max="2100">
+        </div>
+        <div class="field">
+          <label for="episodes">集数</label>
+          <input type="number" id="episodes" placeholder="28" min="1" max="9999">
+        </div>
       </div>
 
-      <label>标签（用逗号分隔）
-        <input name="tags" maxlength="100" placeholder="科幻, 治愈, 神作">
-      </label>
+      <div class="field">
+        <label for="status">状态</label>
+        <select id="status">
+          <option value="在看">在看</option>
+          <option value="想看">想看</option>
+          <option value="看过">看过</option>
+          <option value="搁置">搁置</option>
+        </select>
+      </div>
 
-      <label>封面图片
-        <div class="cover-row">
-          <input name="cover" placeholder="粘贴图片链接，或点右侧上传">
-          <button type="button" class="btn" id="pickCoverBtn">上传</button>
-        </div>
-        <div class="cover-preview" id="coverPreview">
-          <img id="coverPreviewImg" alt="封面预览">
-          <button type="button" id="clearCoverBtn">移除</button>
-        </div>
-        <input type="file" id="coverFile" accept="image/*" hidden>
-      </label>
+      <div class="field">
+        <label for="tags">标签（用逗号分隔）</label>
+        <input type="text" id="tags" placeholder="奇幻, 冒险, 治愈">
+      </div>
 
-      <label>简介
-        <textarea name="summary" rows="3" maxlength="500" placeholder="随便写点什么…"></textarea>
-      </label>
+      <div class="field">
+        <label for="note">备注</label>
+        <textarea id="note" placeholder="个人向短评或记录…"></textarea>
+      </div>
 
-      <div class="actions">
-        <button type="button" class="btn del" id="delBtn">删除</button>
-        <button type="button" class="btn" id="cancelBtn">取消</button>
-        <button type="submit" class="btn primary">保存</button>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="cancelBtn">取消</button>
+        <button type="submit" class="btn btn-primary" style="background:var(--miku);color:#fff;">保存</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-(function(){
-  'use strict';
+(function () {
+  "use strict";
 
-  /* ========== 常量 ========== */
-  const KEY = 'my-collection-v1';
-  const TYPES = ['动画','漫画','游戏','小说','音乐','三次元'];
-  const STATUSES = ['想看','在看','看过','搁置','抛弃'];
-  const STATUS_COLOR = {
-    '想看':'#5b9bd5', '在看':'#4caf7d', '看过':'#9aa3af',
-    '搁置':'#e0a04a', '抛弃':'#d16a6a'
-  };
+  const STORAGE_KEY = "miku_bangumi_list_v1";
 
-  /* 封面压缩参数：网格里显示宽度约 124px，400 宽足够 2 倍屏 */
-  const COVER_MAX_W = 400;
-  const COVER_MAX_H = 600;
-  const COVER_QUALITY = 0.75;
-
-  /* ========== 状态 ========== */
-  let items = [];
-  try {
-    const raw = JSON.parse(localStorage.getItem(KEY));
-    if (Array.isArray(raw)) items = raw;
-  } catch(e){ items = []; }
-
-  let editingId = null;
-  let currentRating = 0;
-  let coverData = '';          // 上传的封面 dataURL
-  let filterType = '全部';
-  let filterStatus = '全部';
-  let keyword = '';
-  let sortBy = 'added';
-
-  /* ========== DOM ========== */
-  const grid         = document.getElementById('grid');
-  const empty        = document.getElementById('empty');
-  const stats        = document.getElementById('stats');
-  const overlay      = document.getElementById('overlay');
-  const form         = document.getElementById('form');
-  const formTitle    = document.getElementById('formTitle');
-  const ratingInput  = document.getElementById('ratingInput');
-  const delBtn       = document.getElementById('delBtn');
-  const typeFilter   = document.getElementById('typeFilter');
-  const statusFilter = document.getElementById('statusFilter');
-  const searchInput  = document.getElementById('search');
-  const sortSel      = document.getElementById('sortSel');
-  const coverFile    = document.getElementById('coverFile');
-  const coverPreview = document.getElementById('coverPreview');
-  const coverImg     = document.getElementById('coverPreviewImg');
-
-  /* ========== 工具 ========== */
-  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => (
-    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
-  ));
-
-  function hueOf(str){
-    let h = 0;
-    for (const ch of String(str)) h = (h * 31 + ch.charCodeAt(0)) % 360;
-    return h;
-  }
-
-  function uid(){
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-  }
-
-  function save(){
+  // ---------- 数据层 ----------
+  function load() {
     try {
-      localStorage.setItem(KEY, JSON.stringify(items));
-    } catch(e){
-      alert('保存失败：浏览器存储空间可能已满。\n建议删除部分条目，或改用图片链接代替上传。');
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
     }
   }
 
-  const field = n => form.querySelector('[name="' + n + '"]');
-
-  /* ========== 封面处理 ========== */
-  function updateCoverPreview(){
-    const src = coverData || field('cover').value.trim();
-    if (src){
-      coverImg.src = src;
-      coverPreview.style.display = 'block';
-    } else {
-      coverImg.removeAttribute('src');
-      coverPreview.style.display = 'none';
-    }
+  function save(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   }
 
-  function processCoverFile(file){
-    if (!file) return;
+  let animeList = load();
 
-    if (!file.type || !file.type.startsWith('image/')){
-      alert('请选择图片文件。');
+  // ---------- DOM ----------
+  const grid = document.getElementById("grid");
+  const countLabel = document.getElementById("countLabel");
+  const searchInput = document.getElementById("searchInput");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalTitle = document.getElementById("modalTitle");
+  const form = document.getElementById("animeForm");
+  const editId = document.getElementById("editId");
+  const titleInput = document.getElementById("title");
+  const yearInput = document.getElementById("year");
+  const episodesInput = document.getElementById("episodes");
+  const statusSelect = document.getElementById("status");
+  const tagsInput = document.getElementById("tags");
+  const noteInput = document.getElementById("note");
+
+  // ---------- 渲染 ----------
+  let keyword = "";
+
+  function filtered() {
+    if (!keyword.trim()) return animeList;
+    const k = keyword.trim().toLowerCase();
+    return animeList.filter(a =>
+      (a.title || "").toLowerCase().includes(k) ||
+      (a.tags || []).some(t => t.toLowerCase().includes(k)) ||
+      (a.note || "").toLowerCase().includes(k)
+    );
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+  }
+
+  function render() {
+    const list = filtered();
+    countLabel.textContent = `共 ${animeList.length} 部${keyword ? `，筛选出 ${list.length} 部` : ""}`;
+
+    if (!list.length) {
+      grid.innerHTML = `<div class="empty">
+        <p>${animeList.length ? "没有匹配的番剧" : "还没有番剧记录"}</p>
+        <p style="margin-top:8px;font-size:0.9rem;">${
+          animeList.length ? "试试换个关键词" : "点击右上角 <strong>+ 添加番剧</strong> 开始记录"
+        }</p>
+      </div>`;
       return;
     }
 
-    const reader = new FileReader();
+    grid.innerHTML = list.map(a => `
+      <div class="card" data-id="${a.id}">
+        <div class="card-top">
+          <div class="card-title">
+            ${escapeHtml(a.title)}
+            ${a.year ? `<span class="year">${escapeHtml(a.year)}</span>` : ""}
+          </div>
+          <span class="status-badge status-${escapeHtml(a.status)}">${escapeHtml(a.status)}</span>
+        </div>
+        <div class="card-meta">
+          ${a.episodes ? `<span>全 ${a.episodes} 集</span>` : ""}
+          ${(a.tags || []).slice(0, 3).map(t => `<span>${escapeHtml(t)}</span>`).join("")}
+        </div>
+        ${a.note ? `<div style="font-size:0.82rem;color:var(--muted);line-height:1.5;">${escapeHtml(a.note)}</div>` : ""}
+        <div class="card-actions">
+          <button class="btn btn-ghost btn-sm edit-btn" data-id="${a.id}">编辑</button>
+          <button class="btn btn-danger btn-sm delete-btn" data-id="${a.id}">删除</button>
+        </div>
+      </div>
+    `).join("");
+  }
 
-    reader.onload = e => {
-      const img = new Image();
+  // ---------- 模态框 ----------
+  function openModal(mode, id) {
+    form.reset();
+    editId.value = "";
+    if (mode === "edit") {
+      const a = animeList.find(x => x.id === id);
+      if (!a) return;
+      modalTitle.textContent = "编辑番剧";
+      editId.value = a.id;
+      titleInput.value = a.title || "";
+      yearInput.value = a.year || "";
+      episodesInput.value = a.episodes || "";
+      statusSelect.value = a.status || "在看";
+      tagsInput.value = (a.tags || []).join(", ");
+      noteInput.value = a.note || "";
+    } else {
+      modalTitle.textContent = "添加番剧";
+    }
+    modalOverlay.classList.add("open");
+    titleInput.focus();
+  }
 
-      img.onload = () => {
-        // 按比例缩放到限制尺寸内，不裁剪
-        let w = img.naturalWidth || img.width;
-        let h = img.naturalHeight || img.height;
-        if (!w || !h){ alert('图片读取失败。'); return; }
+  function closeModal() {
+    modalOverlay.classList.remove("open");
+    form.reset();
+    editId.value = "";
+  }
 
-        const scale = Math.min(1, COVER_MAX_W / w, COVER_MAX_H / h);
-        w = Math.max(1, Math.round(w * scale));
-        h = Math.max(1, Math.round(h * scale));
+  // ---------- 事件 ----------
+  document.getElementById("addBtn").addEventListener("click", () => openModal("add"));
+  document.getElementById("cancelBtn").addEventListener("click", closeModal);
 
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
+  modalOverlay.addEventListener("click", e => {
+    if (e.target === modalOverlay) closeModal();
+  });
 
-        const ctx = canvas.getContext('2d');
-        // 先铺白底，避免透明 PNG 转 JPEG 后变黑
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(img, 0, 0, w, h);
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && modalOverlay.classList.contains("open")) closeModal();
+  });
 
-        try {
-          coverData = canvas.toDataURL('image/jpeg', COVER_QUALITY);
-        } catch(err){
-          alert('图片处理失败，请换一张试试。');
-          return;
-        }
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const title = titleInput.value.trim();
+    if (!title) return;
 
-        // 上传的图片优先于链接，清空链接框避免混淆
-        field('cover').value = '';
-        updateCoverPreview();
-      };
-
-      img.onerror = () => alert('图片格式无法识别，请换一张试试。');
-      img.src = e.target.result;
+    const data = {
+      title,
+      year: yearInput.value ? Number(yearInput.value) : null,
+      episodes: episodesInput.value ? Number(episodesInput.value) : null,
+      status: statusSelect.value,
+      tags: tagsInput.value.split(/[,，]/).map(s => s.trim()).filter(Boolean),
+      note: noteInput.value.trim(),
     };
 
-    reader.onerror = () => alert('文件读取失败，请重试。');
-    reader.readAsDataURL(file);
-  }
-
-  /* ========== 初始化 ========== */
-  function init(){
-    field('type').innerHTML   = TYPES.map(t => '<option>' + t + '</option>').join('');
-    field('status').innerHTML = STATUSES.map(s => '<option>' + s + '</option>').join('');
-
-    let rh = '';
-    for (let i = 1; i <= 10; i++){
-      rh += '<button type="button" class="rbtn" data-v="' + i + '">' + i + '</button>';
-    }
-    ratingInput.innerHTML = rh;
-
-    buildChips();
-    bindEvents();
-    render();
-  }
-
-  function buildChips(){
-    typeFilter.innerHTML = ['全部'].concat(TYPES).map(t =>
-      '<button class="chip' + (filterType === t ? ' active' : '') + '" data-type="' + t + '">' + t + '</button>'
-    ).join('');
-
-    statusFilter.innerHTML = ['全部'].concat(STATUSES).map(s =>
-      '<button class="chip' + (filterStatus === s ? ' active' : '') + '" data-status="' + s + '">' + s + '</button>'
-    ).join('');
-  }
-
-  /* ========== 渲染 ========== */
-  function currentList(){
-    const kw = keyword.trim().toLowerCase();
-
-    const list = items.filter(it => {
-      if (filterType !== '全部' && it.type !== filterType) return false;
-      if (filterStatus !== '全部' && it.status !== filterStatus) return false;
-      if (kw){
-        const hay = [it.title, it.original, it.tags, it.summary]
-          .filter(Boolean).join(' ').toLowerCase();
-        if (!hay.includes(kw)) return false;
+    if (editId.value) {
+      const idx = animeList.findIndex(a => a.id === editId.value);
+      if (idx !== -1) {
+        animeList[idx] = { ...animeList[idx], ...data };
       }
-      return true;
-    });
-
-    list.sort((a, b) => {
-      if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0) || (b.added || 0) - (a.added || 0);
-      if (sortBy === 'title')  return String(a.title).localeCompare(String(b.title), 'zh');
-      return (b.added || 0) - (a.added || 0);
-    });
-
-    return list;
-  }
-
-  function cardHTML(it){
-    const h = hueOf(it.title);
-    const ph = esc(String(it.title).slice(0, 1));
-
-    const img = it.cover
-      ? '<img src="' + esc(it.cover) + '" alt="" loading="lazy" onerror="this.remove()">'
-      : '';
-
-    const rating = it.rating > 0
-      ? '<span class="rating">★ ' + it.rating + '</span>'
-      : '<span>—</span>';
-
-    return '<article class="card" data-id="' + it.id + '">' +
-      '<div class="cover" style="background:hsl(' + h + ',46%,93%);color:hsl(' + h + ',34%,48%)">' +
-        '<span class="ph">' + ph + '</span>' +
-        img +
-        '<span class="status-dot" style="background:' +
-          (STATUS_COLOR[it.status] || '#ccc') + '" title="' + esc(it.status) + '"></span>' +
-      '</div>' +
-      '<div class="card-body">' +
-        '<div class="title" title="' + esc(it.title) + '">' + esc(it.title) + '</div>' +
-        '<div class="sub">' + rating + '<span>·</span><span>' + esc(it.type) + '</span></div>' +
-      '</div>' +
-    '</article>';
-  }
-
-  function render(){
-    const list = currentList();
-
-    if (!items.length){
-      grid.innerHTML = '';
-      empty.innerHTML = '<p>还没有任何条目</p>' +
-        '<p class="dim">点击右上角「＋ 添加」开始记录你的收藏</p>';
-      empty.style.display = 'block';
-    } else if (!list.length){
-      grid.innerHTML = '';
-      empty.innerHTML = '<p>没有匹配的条目</p>' +
-        '<p class="dim">试试换个筛选条件或清空搜索</p>';
-      empty.style.display = 'block';
     } else {
-      empty.style.display = 'none';
-      grid.innerHTML = list.map(cardHTML).join('');
+      animeList.unshift({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        ...data,
+        createdAt: Date.now(),
+      });
     }
 
-    renderStats();
-  }
+    save(animeList);
+    closeModal();
+    render();
+  });
 
-  function renderStats(){
-    if (!items.length){ stats.textContent = ''; return; }
+  grid.addEventListener("click", e => {
+    const editBtn = e.target.closest(".edit-btn");
+    const deleteBtn = e.target.closest(".delete-btn");
 
-    const rated = items.filter(i => i.rating > 0);
-    const avg = rated.length
-      ? (rated.reduce((s, i) => s + i.rating, 0) / rated.length).toFixed(1)
-      : '—';
-
-    const counts = STATUSES
-      .map(s => {
-        const n = items.filter(i => i.status === s).length;
-        return n ? s + ' ' + n : null;
-      })
-      .filter(Boolean)
-      .join(' · ');
-
-    stats.textContent = '共 ' + items.length + ' 条 · ' + counts + ' · 平均分 ' + avg;
-  }
-
-  /* ========== 表单 ========== */
-  function paintRating(){
-    ratingInput.querySelectorAll('.rbtn').forEach(b => {
-      b.classList.toggle('on', Number(b.dataset.v) <= currentRating);
-    });
-  }
-
-  function openForm(item){
-    editingId = item ? item.id : null;
-    formTitle.textContent = item ? '编辑条目' : '添加条目';
-    form.reset();
-
-    field('title').value    = item ? item.title    || '' : '';
-    field('original').value = item ? item.original || '' : '';
-    field('type').value     = item ? item.type     || TYPES[0] : TYPES[0];
-    field('status').value   = item ? item.status   || STATUSES[0] : STATUSES[0];
-    field('progress').value = item && item.progress ? item.progress : '';
-    field('total').value    = item && item.total    ? item.total    : '';
-    field('tags').value     = item ? item.tags     || '' : '';
-    field('summary').value  = item ? item.summary  || '' : '';
-
-    // 封面：区分「上传的图片」和「外部链接」
-    coverData = '';
-    field('cover').value = '';
-    if (item && item.cover){
-      if (item.cover.indexOf('data:') === 0){
-        coverData = item.cover;
-      } else {
-        field('cover').value = item.cover;
-      }
+    if (editBtn) {
+      openModal("edit", editBtn.dataset.id);
+      return;
     }
-    coverFile.value = '';
-    updateCoverPreview();
 
-    currentRating = item ? item.rating || 0 : 0;
-    paintRating();
-
-    delBtn.style.display = item ? 'block' : 'none';
-
-    overlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-    setTimeout(() => field('title').focus(), 60);
-  }
-
-  function closeForm(){
-    overlay.classList.remove('open');
-    document.body.style.overflow = '';
-    editingId = null;
-    coverData = '';
-  }
-
-  /* ========== 事件 ========== */
-  function bindEvents(){
-    document.getElementById('addBtn').addEventListener('click', () => openForm(null));
-    document.getElementById('cancelBtn').addEventListener('click', closeForm);
-
-    overlay.addEventListener('click', e => {
-      if (e.target === overlay) closeForm();
-    });
-
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && overlay.classList.contains('open')) closeForm();
-    });
-
-    /* ---- 封面上传 ---- */
-    document.getElementById('pickCoverBtn').addEventListener('click', () => {
-      coverFile.click();
-    });
-
-    coverFile.addEventListener('change', e => {
-      const file = e.target.files && e.target.files[0];
-      processCoverFile(file);
-      // 重置，保证同一张图可以再次选择
-      e.target.value = '';
-    });
-
-    document.getElementById('clearCoverBtn').addEventListener('click', () => {
-      coverData = '';
-      field('cover').value = '';
-      coverFile.value = '';
-      updateCoverPreview();
-    });
-
-    // 手动输入/粘贴链接时同步预览
-    field('cover').addEventListener('input', () => {
-      if (field('cover').value.trim()) coverData = '';
-      updateCoverPreview();
-    });
-
-    /* ---- 评分 ---- */
-    ratingInput.addEventListener('click', e => {
-      const btn = e.target.closest('.rbtn');
-      if (!btn) return;
-      const v = Number(btn.dataset.v);
-      currentRating = (currentRating === v) ? 0 : v;
-      paintRating();
-    });
-
-    /* ---- 提交 ---- */
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-
-      const title = field('title').value.trim();
-      if (!title) return;
-
-      const data = {
-        title:    title,
-        original: field('original').value.trim(),
-        type:     field('type').value,
-        status:   field('status').value,
-        rating:   currentRating,
-        progress: Number(field('progress').value) || 0,
-        total:    Number(field('total').value) || 0,
-        tags:     field('tags').value.trim(),
-        cover:    coverData || field('cover').value.trim(),
-        summary:  field('summary').value.trim()
-      };
-
-      if (editingId){
-        const i = items.findIndex(x => x.id === editingId);
-        if (i > -1) items[i] = Object.assign({}, items[i], data);
-      } else {
-        items.unshift(Object.assign({ id: uid(), added: Date.now() }, data));
-      }
-
-      save();
-      closeForm();
-      render();
-    });
-
-    /* ---- 删除 ---- */
-    delBtn.addEventListener('click', () => {
-      if (!editingId) return;
-      const item = items.find(x => x.id === editingId);
-      if (!item) return;
-      if (confirm('确定要删除「' + item.title + '」吗？')){
-        items = items.filter(x => x.id !== editingId);
-        save();
-        closeForm();
+    if (deleteBtn) {
+      const id = deleteBtn.dataset.id;
+      const a = animeList.find(x => x.id === id);
+      if (!a) return;
+      if (confirm(`确定删除《${a.title}》吗？`)) {
+        animeList = animeList.filter(x => x.id !== id);
+        save(animeList);
         render();
       }
-    });
+    }
+  });
 
-    /* ---- 筛选 / 搜索 / 排序 ---- */
-    typeFilter.addEventListener('click', e => {
-      const c = e.target.closest('.chip');
-      if (!c) return;
-      filterType = c.dataset.type;
-      buildChips();
-      render();
-    });
+  searchInput.addEventListener("input", () => {
+    keyword = searchInput.value;
+    render();
+  });
 
-    statusFilter.addEventListener('click', e => {
-      const c = e.target.closest('.chip');
-      if (!c) return;
-      filterStatus = c.dataset.status;
-      buildChips();
-      render();
-    });
-
-    searchInput.addEventListener('input', e => {
-      keyword = e.target.value;
-      render();
-    });
-
-    sortSel.addEventListener('change', e => {
-      sortBy = e.target.value;
-      render();
-    });
-
-    grid.addEventListener('click', e => {
-      const card = e.target.closest('.card');
-      if (!card) return;
-      const item = items.find(x => x.id === card.dataset.id);
-      if (item) openForm(item);
-    });
-  }
-
-  init();
+  // ---------- 启动 ----------
+  render();
 })();
 </script>
 </body>
